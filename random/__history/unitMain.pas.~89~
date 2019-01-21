@@ -1,0 +1,126 @@
+unit unitMain;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, System.Generics.Collections;
+
+type
+  TForm1 = class(TForm)
+    btnStart: TButton;
+    btnStop: TButton;
+    lblLog: TLabel;
+    GroupBox1: TGroupBox;
+    lbl1: TLabel;
+    edtUContent: TEdit;
+    btnAddContent: TButton;
+    btnReset: TButton;
+    procedure btnAddContentClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure btnStartClick(Sender: TObject);
+    procedure btnStopClick(Sender: TObject);
+    procedure btnResetClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+  RandomCon: TList<string>;
+  UThread: TThread;
+
+implementation
+
+{$R *.dfm}
+procedure RandomStart();
+begin
+
+end;
+
+procedure TForm1.btnAddContentClick(Sender: TObject);
+var
+  UCon: string;
+  UFirst: Integer;
+  ULast: Integer;
+begin
+  UFirst := RandomCon.Count;
+  UCon := edtUContent.Text;
+  if UCon = '' then
+  begin
+    MessageBox(Self.Handle, '输入框不能为空', '错误提示', MB_ICONERROR or MB_OK);
+    Exit;
+  end;
+  RandomCon.Add(UCon);
+  ULast := RandomCon.Count;
+  if ULast <= UFirst then
+  begin
+    ShowMessage('添加失败！');
+    Exit;
+  end;
+  edtUContent.Text := '';
+end;
+
+procedure TForm1.btnResetClick(Sender: TObject);
+begin
+  RandomCon.Clear;
+  lblLog.Caption := IntToStr(0);
+end;
+
+procedure TForm1.btnStartClick(Sender: TObject);
+begin
+  if RandomCon.Count < 3 then
+  begin
+    MessageBox(Self.Handle, '请先添加3个以上的随机值', '温馨提示', MB_ICONASTERISK or MB_OK);
+    Exit;
+  end;
+  try
+    UThread := TThread.CreateAnonymousThread(
+      procedure
+      var
+        Elem: string;
+      begin
+        while True do
+        begin
+          for Elem in RandomCon do
+          begin
+            Self.lblLog.Caption := Elem;
+            //TThread.Sleep(100);
+          end;
+        end;
+      end);
+    UThread.Start;
+    btnStart.Enabled := False;
+    btnStop.Enabled := True;
+    btnAddContent.Enabled := False;
+    btnReset.Enabled := False;
+  except
+    on E: Exception do
+      MessageBox(Self.Handle, '开始随机失败', '错误提示', MB_ICONERROR or MB_OK);
+  end;
+end;
+
+procedure TForm1.btnStopClick(Sender: TObject);
+begin
+  try
+    TerminateThread(UThread.Handle, 0);
+  except
+    on E: Exception do
+      MessageBox(Self.Handle, '停止随机失败', '错误提示', MB_ICONERROR or MB_OK);
+  end;
+  btnStart.Enabled := True;
+  btnStop.Enabled := False;
+  btnAddContent.Enabled := True;
+  btnReset.Enabled := True;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  RandomCon := TList<string>.Create;
+  btnStop.Enabled := False;
+end;
+
+end.
+
